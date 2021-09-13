@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SQLiteORM
 {
-    public class Class1
+    public class SQLiteORM
     {
+        public Task GetItem(string id)
+        {
+
+        }
     }
 }
