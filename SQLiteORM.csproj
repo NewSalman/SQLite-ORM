@@ -2,6 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>HHHHHHHHHHHHHH</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GenericFuntionLib" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GenericFuntionLib">
+      <HintPath>..\GenericFuntionLib\bin\Debug\netstandard2.1\GenericFuntionLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
 </Project>
