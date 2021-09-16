@@ -3,11 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <IsPackable>true</IsPackable>
     <Description>HHHHHHHHHHHHHH</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GenericFuntionLib" Version="1.0.0" />
+    <PackageReference Include="GenericFuntionLib" Version="1.0.2" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.9" />
   </ItemGroup>
 

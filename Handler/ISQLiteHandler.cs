@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace SQLiteORM.Handler
 {
-    public interface ISQLiteHandler : IDisposable
+    public interface ISQLiteHandler<T> : IDisposable
     {
         //string ConnectionString { get; set; }
         SqliteConnection _conn { get; set; }
         string TableName { get; set; }
-        Task<T> GetItem<U, T>(U id) where T : new();
-        Task<List<T>> GetAllItems<T>() where T : new();
-        Task AddItem<Type>(Type item);
-        Task UpdateItem<Type, IType>(Type id, IType item);
-        Task DeleteItem<Type>(Type id);
+        Task<T> GetItem<Param>(Param id);
+        Task<List<T>> GetAllItems();
+        Task AddItem(T item);
+        Task UpdateItem<Param>(Param primaryKey, T item);
+        Task DeleteItem<Param>(Param id);
     }
 }
