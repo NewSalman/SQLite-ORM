@@ -9,13 +9,17 @@
 
   <ItemGroup>
     <PackageReference Include="GenericFuntionLib" Version="1.0.2" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.9" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.10" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="GenericFuntionLib">
       <HintPath>..\GenericFuntionLib\bin\Debug\netstandard2.1\GenericFuntionLib.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Handler\StatementHanlder\" />
   </ItemGroup>
 
 </Project>

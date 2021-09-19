@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SQLiteORM.Handler;
 using SQLiteORM.Testing;
+using System.IO;
 
 namespace SQLiteORM
 {
@@ -10,11 +11,18 @@ namespace SQLiteORM
     {
         ISQLiteHandler<T> handler { get; set; }
 
-        public ORM(string table, string connectionString)
+        public ORM(string table, string connectionString) 
         {
-            handler = new SQLiteHandler<T>(@"Data Source=C:\Users\Admin7\source\repos\MyPortofolio\Portofilio\User.db;Cache=Shared");
-            handler.TableName = "UserSession";
+            handler = new SQLiteHandler<T>(connectionString);
+            handler.TableName = table;
+        }
 
+        public ORM(string table, string dbname, string Password = "")
+        {
+            string path = Path.Combine(Environment.CurrentDirectory, dbname);
+            Console.WriteLine(path);
+            handler = new SQLiteHandler<T>($"Data Source={path};");
+            handler.TableName = table;
         }
 
         public Task<List<T>> GetAllItems()

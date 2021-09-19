@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using GenericFuntionLib;
+using System.IO;
 
 namespace SQLiteORM.Handler
 {
@@ -21,11 +22,8 @@ namespace SQLiteORM.Handler
 
         public SQLiteHandler(string ConnectionString)
         {
-            Console.WriteLine(Environment.CurrentDirectory);
             _conn = new SqliteConnection(ConnectionString);
             _conn.Open();
-
-
         }
 
 
@@ -109,8 +107,7 @@ namespace SQLiteORM.Handler
             {
                 while (reader.Read())
                 {
-                    T item = new T();
-                    items.Add(SeriliazeItem(reader, item));
+                    items.Add(SeriliazeItem(reader));
                 }
             }
             return Task.FromResult(items);
@@ -118,8 +115,23 @@ namespace SQLiteORM.Handler
 
         public Task<T> GetItem<Param>(Param id)
         {
-            string QueryStmt = $"Select id,Username,LoginAt From {TableName} Where id = $id";
             T item = new T();
+            PropertyInfo[] props = item.GetType().GetProperties(); 
+            string QueryStmt = $"Select  ";
+            StringBuilder sb = new StringBuilder();
+
+            for(int i = 0; i < props.Length; i++)
+            {
+                if(i == props.Length - 1)
+                {
+                    sb.Append($"{props[i].Name} ");
+                    break;
+                }
+                sb.Append($"{props[i].Name},");
+            }
+
+            QueryStmt += sb.ToString() + $"From {TableName} Where id = $id";
+
             using (var commd = _conn.CreateCommand())
             {
                 commd.CommandText = QueryStmt;
@@ -127,9 +139,9 @@ namespace SQLiteORM.Handler
                 
                 using (SqliteDataReader reader = commd.ExecuteReader())
                 {
-                    while(reader.Read())
+                    while (reader.Read())
                     {
-                        SeriliazeItem(reader, item);
+                        item = SeriliazeItem(reader);
                     }
                 }
                 
@@ -184,8 +196,9 @@ namespace SQLiteORM.Handler
             _conn.Close();
         }
 
-        private T SeriliazeItem(SqliteDataReader reader, T item)
+        private T SeriliazeItem(SqliteDataReader reader)
         {
+            T item = new T();
             PropertyInfo[] props = item.GetType().GetProperties();
             for (int i = 0; i < props.Length; i++)
             {
