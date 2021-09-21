@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using GenericFuntionLib;
 using System.IO;
+using SQLiteORM.Attribute;
 
 namespace SQLiteORM.Handler
 {
@@ -42,7 +43,19 @@ namespace SQLiteORM.Handler
 
             for(int i = 0; i < props.Length; i++)
             {
-                if(i == props.Length - 1)
+                var attribInfo = props[i].GetCustomAttribute(typeof(ManyRelation));
+                if(attribInfo != null)
+                {
+                    if(i == props.Length - 1)
+                    {
+                        sb.ToString().TrimEnd(',');
+                        break;
+                    }
+                    continue;
+                }
+                
+                
+                if (i == props.Length - 1)
                 {
                     sb.Append($"${props[i].Name}");
                     break;
@@ -62,7 +75,19 @@ namespace SQLiteORM.Handler
 
             for(int i = 0; i < props.Length; i++)
             {
-                cmmd.Parameters.AddWithValue($"${props[i].Name}", Generic.GetValue(item, props[i].Name));
+                
+                var attribInfo = props[i].GetCustomAttribute(typeof(ManyRelation));
+                if (attribInfo != null)
+                {
+                    continue;
+                }
+                object value = Generic.GetValue(item, props[i].Name);
+                if(value.GetType() == typeof(bool))
+                {
+                    cmmd.Parameters.AddWithValue($"${props[i].Name}", (bool)value ? 1 : 0);
+                    continue;
+                }
+                cmmd.Parameters.AddWithValue($"${props[i].Name}", value);
                 Console.WriteLine(Generic.GetValue(item, props[i].Name));
             }
 
@@ -80,13 +105,13 @@ namespace SQLiteORM.Handler
         /// <typeparam name="Param"></typeparam>
         /// <param name="id">Int or guid or string</param>
         /// <returns>Task</returns>
-        public Task DeleteItem<Param>(Param id)
+        public Task DeleteItem<Param>(Param value, string coloumName)
         {
-            string Deletestmt = $"Delete From {TableName} Where id = $id";
+            string Deletestmt = $"Delete From {TableName} Where {coloumName} = $id";
             using(var commd = _conn.CreateCommand())
             {
                 commd.CommandText = Deletestmt;
-                commd.Parameters.AddWithValue("$id", id);
+                commd.Parameters.AddWithValue($"${coloumName}", value);
 
                 Console.WriteLine("item deleted = {0}", commd.ExecuteNonQuery());
             }
@@ -107,13 +132,23 @@ namespace SQLiteORM.Handler
             {
                 while (reader.Read())
                 {
-                    items.Add(SeriliazeItem(reader));
+                    try
+                    {
+                        items.Add(SeriliazeItem(reader));
+                    }
+                    catch (SqliteException sx)
+                    {
+                        Console.WriteLine(sx.Message);
+                        continue;
+                    }
                 }
+                
+                
             }
             return Task.FromResult(items);
         }
 
-        public Task<T> GetItem<Param>(Param id)
+        public Task<T> GetItem<Param>(Param Value, string ColoumName)
         {
             T item = new T();
             PropertyInfo[] props = item.GetType().GetProperties(); 
@@ -130,27 +165,35 @@ namespace SQLiteORM.Handler
                 sb.Append($"{props[i].Name},");
             }
 
-            QueryStmt += sb.ToString() + $"From {TableName} Where id = $id";
+            QueryStmt += sb.ToString() + $"From {TableName} Where {ColoumName} = ${ColoumName}";
 
             using (var commd = _conn.CreateCommand())
             {
                 commd.CommandText = QueryStmt;
-                commd.Parameters.AddWithValue("$id", id);
+                commd.Parameters.AddWithValue($"${ColoumName}", Value);
                 
-                using (SqliteDataReader reader = commd.ExecuteReader())
-                {
-                    while (reader.Read())
+                
+
+                    try
                     {
-                        item = SeriliazeItem(reader);
+                        using (SqliteDataReader reader = commd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                item = SeriliazeItem(reader);
+                            }
+                        }
                     }
-                }
-                
+                    catch (SqliteException sx)
+                    {
+                    Console.WriteLine(sx.Message);
+                    }
             }
 
             return Task.FromResult(item);
         }
 
-        public Task UpdateItem<Param>(Param id, T item)
+        public Task UpdateItem<Param>(Param coloumValue, string columnName, T item)
         {
             //init required variable
             string UpdateStmt = $"Update {TableName} Set ";
@@ -171,7 +214,7 @@ namespace SQLiteORM.Handler
 
             UpdateStmt += sb.ToString();
 
-            UpdateStmt += " Where id = $id";
+            UpdateStmt +=$" Where {columnName} = {coloumValue}";
 
             Console.WriteLine(UpdateStmt);
             //run update the item
@@ -204,16 +247,29 @@ namespace SQLiteORM.Handler
             {
                 try
                 {
-                    if (reader[props[i].Name].GetType() == typeof(long))
+                    if (reader[props[i].Name].GetType() == typeof(int))
                     {
                         Generic.SetValue(item, props[i].Name, int.Parse(reader[props[i].Name].ToString()));
-                        continue;
                     }
-                    Generic.SetValue(item, props[i].Name, reader[props[i].Name]);
-                } catch(ArgumentException)
+                    else if (reader[props[i].Name].GetType() == typeof(DateTime))
+                    {
+                        Generic.SetValue(item, props[i].Name, DateTime.Parse(reader[props[i].Name].ToString()));
+                    }
+                    else if (reader[props[i].Name].GetType() == typeof(string))
+                    {
+                        Generic.SetValue(item, props[i].Name, reader[props[i].Name]);
+                    }
+                    else if (reader[props[i].Name].GetType() == typeof(Int64))
+                    {
+                        Generic.SetValue(item, props[i].Name, int.Parse(reader[props[i].Name].ToString()));
+                    }
+                    else
+                    {
+                        throw new FormatException();
+                    }
+                } catch(ArgumentOutOfRangeException)
                 {
-                    DateTime DateTime = DateTime.Parse(reader[props[i].Name].ToString());
-                    Generic.SetValue(item, props[i].Name, DateTime);
+                    continue;
                 }
             }
             return item;

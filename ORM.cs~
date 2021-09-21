@@ -20,9 +20,11 @@ namespace SQLiteORM
         public ORM(string table, string dbname, string Password = "")
         {
             string path = Path.Combine(Environment.CurrentDirectory, dbname);
+            Console.WriteLine(path);
 	    
             handler = new SQLiteHandler<T>($"Data Source={path};");
             handler.TableName = table;
+
         }
 
         public Task<List<T>> GetAllItems()
@@ -35,24 +37,19 @@ namespace SQLiteORM
             return handler.AddItem(item);
         }
 
-        public Task DeleteItems<Param>(Param value, string coloumName)
+        public Task DeleteItems<Param>(Param id)
         {
-            return handler.DeleteItem(value, coloumName);
+            return handler.DeleteItem(id);
         }
 
-        public Task<T> GetItems<Param>(Param value, string coloumName)
+        public Task<T> GetItems<Param>(Param id)
         {
-            return handler.GetItem(value, coloumName);
+            return handler.GetItem(id);
         }
 
-        public Task UpdateItems<Param>(Param value, string coloumName,T item)
+        public Task UpdateItems<Param>(Param id, T item)
         {
-            return handler.UpdateItem(value, coloumName, item);
-        }
-
-        public void Dispose()
-        {
-            handler.Dispose();
+            return handler.UpdateItem(id, item);
         }
     }
 }
